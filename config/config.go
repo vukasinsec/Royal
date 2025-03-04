@@ -14,18 +14,25 @@ type Config struct {
 	APIURL   string
 }
 
-// LoadConfig učitava konfiguraciju iz .env fajla
+// LoadConfig učitava konfiguraciju iz .env, ENV promenljivih ili koristi default vrednosti
 func LoadConfig() Config {
+	// Pokušaj učitavanja .env fajla
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Upozorenje: Nema .env fajla, koristi default vrednosti")
+		log.Println("⚠️ Upozorenje: Nema .env fajla, koristi ENV ili default vrednosti")
 	}
 
+	// Čitamo iz ENV ili koristimo default vrednosti
 	botToken := os.Getenv("BOT_TOKEN")
-	chatID := os.Getenv("GROUP_CHAT_ID") // Koristimo ID grupe
+	if botToken == "" {
+		botToken = "8094936661:AAEVeFB_jnMI91nsw_WPqAA80-nRgoRbiR8"
+		log.Println("⚠️ Upozorenje: BOT_TOKEN nije pronađen, koristi default vrednost")
+	}
 
-	if botToken == "" || chatID == "" {
-		log.Fatal("Greška: Nema BOT_TOKEN ili GROUP_CHAT_ID u konfiguraciji")
+	chatID := os.Getenv("GROUP_CHAT_ID")
+	if chatID == "" {
+		chatID = "-4716526628" // Default grupa
+		log.Println("⚠️ Upozorenje: GROUP_CHAT_ID nije pronađen, koristi default vrednost")
 	}
 
 	return Config{

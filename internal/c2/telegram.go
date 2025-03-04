@@ -48,21 +48,44 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 
 // SendMessage šalje poruku sa identifikacijom klijenta
 func SendMessage(message string) error {
-	cfg := config.LoadConfig()   // Učitava token i chat ID iz .env
-	hostname, _ := os.Hostname() // Dohvati ime računara klijenta
+	cfg := config.LoadConfig()
+	hostname, _ := os.Hostname()
 
+	/* Debug log – Provera BOT_TOKEN i CHAT_ID pre slanja
+	log.Println("📡 Pokušaj slanja poruke u Telegram...")
+	log.Println("🔹 BOT_TOKEN:", cfg.BotToken)
+	log.Println("🔹 GROUP_CHAT_ID:", cfg.ChatID)
+	*/
+
+	// Proveri da li su promenljive postavljene
+	if cfg.BotToken == "default_bot_token" || cfg.ChatID == "default_chat_id" {
+		log.Println("❌ Greška: BOT_TOKEN ili GROUP_CHAT_ID nisu postavljeni!")
+		return nil
+	}
+
+	// Priprema JSON podataka za slanje
 	data := map[string]string{
 		"chat_id": cfg.ChatID,
-		"text":    fmt.Sprintf("[%s] %s", hostname, message), // Dodaj hostname uz poruku
+		"text":    "[" + hostname + "] " + message,
 	}
 
 	jsonData, _ := json.Marshal(data)
 
+	// Debug – Šta se tačno šalje?
+	//log.Println("📩 HTTP request body:", string(jsonData))
+
+	// Kreiramo HTTP zahtev
 	resp, err := http.Post(cfg.APIURL+"/sendMessage", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Println("❌ Greška pri slanju poruke:", err)
 		return err
 	}
 	defer resp.Body.Close()
+
+	// Debug – Prikazujemo odgovor od Telegram API-ja
+	//body, _ := io.ReadAll(resp.Body)
+	//log.Println("📬 Telegram API response status:", resp.Status)
+	//log.Println("📬 Telegram API response body:", string(body))
 
 	return nil
 }
